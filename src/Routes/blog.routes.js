@@ -4,6 +4,7 @@ import {
   getAllBlogs,
   getBlogById,
   updateBlogById,
+  deleteBlogById,
 } from "../Controllers/blog.controller.js";
 const router = express.Router();
 
@@ -18,5 +19,8 @@ router.get("/blogs/:id", getBlogById);
 
 // Update blog by ID
 router.put("/blogs/:id", updateBlogById);
+
+// Delete blog by ID
+router.delete("/blogs/:id", deleteBlogById);
 
 export default router;

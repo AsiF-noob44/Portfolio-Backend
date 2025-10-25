@@ -106,11 +106,6 @@ export const getAllBlogs = async (req, res) => {
   }
 };
 
-// Get all blogs: GET /api/v1/blogs
-// Page 2: GET /api/v1/blogs?page=2
-// Tech blogs only: GET /api/v1/blogs?category=tech
-// Tech blogs, page 2, 5 per page: GET /api/v1/blogs?category=tech&page=2&limit=5
-
 // Get single blog by ID
 export const getBlogById = async (req, res) => {
   try {
@@ -169,7 +164,7 @@ export const updateBlogById = async (req, res) => {
       });
     }
 
-    // Check if blog with same title already exists (excluding current blog)
+    // Checking if blog with same title already exists (excluding current blog)
     const existingBlog = await Blog.findOne({
       title: title.trim(),
       _id: { $ne: req.params.id },
@@ -218,6 +213,40 @@ export const updateBlogById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error updating blog",
+      error: error.message,
+    });
+  }
+};
+
+// Delete blog by ID
+export const deleteBlogById = async (req, res) => {
+  try {
+    // Validate MongoDB ObjectId format
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid blog ID format",
+      });
+    }
+
+    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+
+    if (!deletedBlog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Blog deleted successfully",
+      blog: deletedBlog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting blog",
       error: error.message,
     });
   }

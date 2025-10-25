@@ -1,0 +1,186 @@
+====================================
+BLOG API DOCUMENTATION
+====================================
+
+Base URL: http://localhost:5000/api/v1
+
+====================================
+1. CREATE A NEW BLOG
+====================================
+Method: POST
+URL: http://localhost:5000/api/v1/blogs
+
+Description: Creates a new blog post in the database
+
+Request Body (JSON):
+{
+  "title": "Your Blog Title",
+  "img": "https://example.com/image.jpg",
+  "category": "tech",  // Options: tech, design, business
+  "description": "Full blog description",
+  "short_description": "Brief summary"
+}
+
+Required Fields:
+- title (min 5 chars, max 200 chars)
+- description
+
+Response (201 Created):
+{
+  "message": "Blog created successfully",
+  "blog": { ... blog object ... }
+}
+
+====================================
+2. GET ALL BLOGS
+====================================
+Method: GET
+URL: http://localhost:5000/api/v1/blogs
+
+Description: Retrieves all blogs with pagination and filtering
+
+Query Parameters (Optional):
+- page: Page number (default: 1)
+- limit: Results per page (default: 10)
+- category: Filter by category (tech, design, or business)
+
+Examples:
+- Get all blogs (page 1): http://localhost:5000/api/v1/blogs
+- Get page 2: http://localhost:5000/api/v1/blogs?page=2
+- Get tech blogs only: http://localhost:5000/api/v1/blogs?category=tech
+- Get design blogs, page 2, 5 per page: http://localhost:5000/api/v1/blogs?category=design&page=2&limit=5
+
+Response (200 OK):
+{
+  "success": true,
+  "totalBlogs": 25,
+  "currentPage": 1,
+  "totalPages": 3,
+  "limit": 10,
+  "blogs": [ ... array of blog objects ... ]
+}
+
+====================================
+3. GET SINGLE BLOG BY ID
+====================================
+Method: GET
+URL: http://localhost:5000/api/v1/blogs/:id
+
+Description: Retrieves a single blog by ID and increments view count
+
+Example:
+http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
+
+Response (200 OK):
+{
+  "success": true,
+  "blog": { ... blog object with incremented views ... }
+}
+
+Note: This endpoint automatically increments the views counter by 1 each time it's called.
+
+====================================
+4. UPDATE A BLOG
+====================================
+Method: PUT
+URL: http://localhost:5000/api/v1/blogs/:id
+
+Description: Updates an existing blog by ID
+
+Example:
+http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
+
+Request Body (JSON):
+{
+  "title": "Updated Title",
+  "img": "https://example.com/new-image.jpg",
+  "category": "business",
+  "description": "Updated description",
+  "short_description": "Updated summary"
+}
+
+Required Fields:
+- title
+- description
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Blog updated successfully",
+  "blog": { ... updated blog object ... }
+}
+
+====================================
+5. DELETE A BLOG
+====================================
+Method: DELETE
+URL: http://localhost:5000/api/v1/blogs/:id
+
+Description: Deletes a blog by ID
+
+Example:
+http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Blog deleted successfully",
+  "blog": { ... deleted blog object ... }
+}
+
+====================================
+ERROR RESPONSES
+====================================
+
+400 Bad Request:
+- Invalid blog ID format
+- Missing required fields
+- Validation errors
+
+404 Not Found:
+- Blog not found
+
+409 Conflict:
+- Blog with same title already exists
+
+500 Internal Server Error:
+- Server error
+
+====================================
+BLOG SCHEMA
+====================================
+
+{
+  "_id": "MongoDB ObjectId",
+  "title": "String (required, 5-200 chars)",
+  "img": "String (default: 'default-image.jpg')",
+  "category": "String (tech/design/business, lowercase)",
+  "description": "String (required)",
+  "short_description": "String (max 150 chars)",
+  "views": "Number (default: 0, min: 0, max: 1000000)",
+  "createdAt": "Date (auto-generated)",
+  "updatedAt": "Date (auto-generated)"
+}
+
+====================================
+CATEGORIES
+====================================
+- tech
+- design
+- business
+
+Note: Categories are automatically converted to lowercase.
+
+====================================
+POSTMAN COLLECTION SUMMARY
+====================================
+
+1. Create Blog       → POST   /api/v1/blogs
+2. Get All Blogs     → GET    /api/v1/blogs
+3. Get Blog by ID    → GET    /api/v1/blogs/:id
+4. Update Blog       → PUT    /api/v1/blogs/:id
+5. Delete Blog       → DELETE /api/v1/blogs/:id
+
+====================================
+END OF DOCUMENTATION
+====================================
