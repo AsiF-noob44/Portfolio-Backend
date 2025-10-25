@@ -3,6 +3,7 @@ import {
   createBlog,
   getAllBlogs,
   getBlogById,
+  updateBlogById,
 } from "../Controllers/blog.controller.js";
 const router = express.Router();
 
@@ -12,7 +13,10 @@ router.post("/blogs", createBlog);
 // Get all blogs
 router.get("/blogs", getAllBlogs);
 
-// Get single blog by ID (increments views)
+// Get single blog by ID
 router.get("/blogs/:id", getBlogById);
+
+// Update blog by ID
+router.put("/blogs/:id", updateBlogById);
 
 export default router;

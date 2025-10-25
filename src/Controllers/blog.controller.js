@@ -106,9 +106,22 @@ export const getAllBlogs = async (req, res) => {
   }
 };
 
-// Get single blog by ID and increment views
+// Get all blogs: GET /api/v1/blogs
+// Page 2: GET /api/v1/blogs?page=2
+// Tech blogs only: GET /api/v1/blogs?category=tech
+// Tech blogs, page 2, 5 per page: GET /api/v1/blogs?category=tech&page=2&limit=5
+
+// Get single blog by ID
 export const getBlogById = async (req, res) => {
   try {
+    // Validation for MongoDB ObjectId format
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid blog ID format",
+      });
+    }
+
     const blog = await Blog.findByIdAndUpdate(
       req.params.id,
       { $inc: { views: 1 } }, // Increment views by 1
@@ -130,6 +143,81 @@ export const getBlogById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching blog",
+      error: error.message,
+    });
+  }
+};
+
+// Update Blog by ID
+export const updateBlogById = async (req, res) => {
+  try {
+    // Validate MongoDB ObjectId format
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid blog ID format",
+      });
+    }
+
+    const { title, img, category, description, short_description } = req.body;
+
+    // Validate required fields
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        message: "Title and description are required",
+      });
+    }
+
+    // Check if blog with same title already exists (excluding current blog)
+    const existingBlog = await Blog.findOne({
+      title: title.trim(),
+      _id: { $ne: req.params.id },
+    });
+    if (existingBlog) {
+      return res.status(409).json({
+        success: false,
+        message: "Blog with this title already exists",
+      });
+    }
+
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        img,
+        category,
+        description,
+        short_description,
+      },
+      { new: true, runValidators: true } // Run schema validations
+    );
+
+    if (!updatedBlog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Blog updated successfully",
+      blog: updatedBlog,
+    });
+  } catch (error) {
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: Object.values(error.errors).map((e) => e.message),
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Error updating blog",
       error: error.message,
     });
   }
