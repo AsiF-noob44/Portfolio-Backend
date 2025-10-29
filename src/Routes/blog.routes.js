@@ -9,18 +9,21 @@ import {
 const router = express.Router();
 
 // Blog Routes
-router.post("/blogs", createBlog);
+// Base path: /api/v1/blogs
+
+// Create a new blog
+router.post("/", createBlog);
 
 // Get all blogs
-router.get("/blogs", getAllBlogs);
+router.get("/", getAllBlogs);
 
 // Get single blog by ID
-router.get("/blogs/:id", getBlogById);
+router.get("/:id", getBlogById);
 
 // Update blog by ID
-router.put("/blogs/:id", updateBlogById);
+router.put("/:id", updateBlogById);
 
 // Delete blog by ID
-router.delete("/blogs/:id", deleteBlogById);
+router.delete("/:id", deleteBlogById);
 
 export default router;

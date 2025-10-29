@@ -2,6 +2,7 @@
 import express from "express";
 import connectDB from "./Config/database.config.js";
 import blogRoutes from "./Routes/blog.routes.js";
+import userRoutes from "./Routes/user.routes.js";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
@@ -15,10 +16,8 @@ app.use(express.urlencoded({ extended: true }));
 connectDB();
 
 // Use Routes
-app.use("/api/v1", blogRoutes);
-// Add more routes like this:
-// app.use("/api/v1", userRoutes);
-// app.use("/api/v1", projectRoutes);
+app.use("/api/v1/blogs", blogRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // Home Route
 app.get("/", (req, res) => {
