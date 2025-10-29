@@ -4,18 +4,20 @@ import connectDB from "./Config/database.config.js";
 import blogRoutes from "./Routes/blog.routes.js";
 import userRoutes from "./Routes/user.routes.js";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middlewares
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to Database
 connectDB();
 
-// Use Routes
+// Routes
 app.use("/api/v1/blogs", blogRoutes);
 app.use("/api/v1/users", userRoutes);
 

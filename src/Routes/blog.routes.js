@@ -6,24 +6,20 @@ import {
   updateBlogById,
   deleteBlogById,
 } from "../Controllers/blog.controller.js";
+import { validateUser } from "../middlewares/validation.middleware.js";
+
 const router = express.Router();
 
 // Blog Routes
 // Base path: /api/v1/blogs
 
-// Create a new blog
-router.post("/", createBlog);
-
-// Get all blogs
+// Public routes
 router.get("/", getAllBlogs);
-
-// Get single blog by ID
 router.get("/:id", getBlogById);
 
-// Update blog by ID
-router.put("/:id", updateBlogById);
-
-// Delete blog by ID
-router.delete("/:id", deleteBlogById);
+// Protected routes
+router.post("/", validateUser, createBlog);
+router.put("/:id", validateUser, updateBlogById);
+router.delete("/:id", validateUser, deleteBlogById);
 
 export default router;

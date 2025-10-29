@@ -1,22 +1,119 @@
 ====================================
-BLOG API DOCUMENTATION
+PORTFOLIO BACKEND API DOCUMENTATION
 ====================================
 
 Base URL: http://localhost:5000/api/v1
 
 ====================================
-1. CREATE A NEW BLOG
+AUTHENTICATION ENDPOINTS
 ====================================
+
+------------------------------------
+1. REGISTER USER
+------------------------------------
+Method: POST
+URL: http://localhost:5000/api/v1/users/register
+
+Description: Registers a new user account
+
+Request Body (JSON):
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+Required Fields:
+- username (required, unique, trimmed)
+- email (required, unique, valid email format, lowercase)
+- password (required, min 6 characters)
+
+Response (201 Created):
+{
+  "message": "User registered successfully",
+  "user": {
+    "_id": "507f1f77bcf86cd799439011",
+    "username": "johndoe",
+    "email": "john@example.com",
+    "createdAt": "2025-10-29T12:00:00.000Z",
+    "updatedAt": "2025-10-29T12:00:00.000Z"
+  }
+}
+
+Error Responses:
+- 400: Invalid email format, validation errors
+- 409: User with this email/username already exists
+- 500: Server error
+
+------------------------------------
+2. LOGIN USER
+------------------------------------
+Method: POST
+URL: http://localhost:5000/api/v1/users/login
+
+Description: Authenticates user and returns JWT token
+
+Request Body (JSON):
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+Required Fields:
+- email (required)
+- password (required)
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "_id": "507f1f77bcf86cd799439011",
+    "username": "johndoe",
+    "email": "john@example.com"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Note: JWT token is also set as HTTP-only cookie named "user-token"
+
+Cookie Details:
+- Name: user-token
+- httpOnly: true
+- secure: true
+- sameSite: Strict
+- Expires: 7 days (default)
+
+Error Responses:
+- 404: User not found
+- 401: Invalid credentials
+- 500: Server error
+
+====================================
+BLOG ENDPOINTS
+====================================
+
+Note: Creating, updating, and deleting blogs requires authentication.
+Reading blogs is public (no authentication required).
+
+------------------------------------
+3. CREATE A NEW BLOG (Protected)
+------------------------------------
 Method: POST
 URL: http://localhost:5000/api/v1/blogs
 
-Description: Creates a new blog post in the database
+Description: Creates a new blog post (requires authentication)
+
+Authentication Required: YES
+Headers:
+Authorization: Bearer <your-jwt-token>
+OR Cookie: user-token=<your-jwt-token>
 
 Request Body (JSON):
 {
   "title": "Your Blog Title",
   "img": "https://example.com/image.jpg",
-  "category": "tech",  // Options: tech, design, business
+  "category": "tech",
   "description": "Full blog description",
   "short_description": "Brief summary"
 }
@@ -31,13 +128,21 @@ Response (201 Created):
   "blog": { ... blog object ... }
 }
 
-====================================
-2. GET ALL BLOGS
-====================================
+Error Responses:
+- 401: Unauthorized access - Please login
+- 400: Validation errors
+- 409: Blog with same title already exists
+- 500: Server error
+
+------------------------------------
+4. GET ALL BLOGS (Public)
+------------------------------------
 Method: GET
 URL: http://localhost:5000/api/v1/blogs
 
 Description: Retrieves all blogs with pagination and filtering
+
+Authentication Required: NO
 
 Query Parameters (Optional):
 - page: Page number (default: 1)
@@ -60,13 +165,15 @@ Response (200 OK):
   "blogs": [ ... array of blog objects ... ]
 }
 
-====================================
-3. GET SINGLE BLOG BY ID
-====================================
+------------------------------------
+5. GET SINGLE BLOG BY ID (Public)
+------------------------------------
 Method: GET
 URL: http://localhost:5000/api/v1/blogs/:id
 
 Description: Retrieves a single blog by ID and increments view count
+
+Authentication Required: NO
 
 Example:
 http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
@@ -79,13 +186,23 @@ Response (200 OK):
 
 Note: This endpoint automatically increments the views counter by 1 each time it's called.
 
-====================================
-4. UPDATE A BLOG
-====================================
+Error Responses:
+- 400: Invalid blog ID format
+- 404: Blog not found
+- 500: Server error
+
+------------------------------------
+6. UPDATE A BLOG (Protected)
+------------------------------------
 Method: PUT
 URL: http://localhost:5000/api/v1/blogs/:id
 
-Description: Updates an existing blog by ID
+Description: Updates an existing blog by ID (requires authentication)
+
+Authentication Required: YES
+Headers:
+Authorization: Bearer <your-jwt-token>
+OR Cookie: user-token=<your-jwt-token>
 
 Example:
 http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
@@ -110,13 +227,24 @@ Response (200 OK):
   "blog": { ... updated blog object ... }
 }
 
-====================================
-5. DELETE A BLOG
-====================================
+Error Responses:
+- 401: Unauthorized access - Please login
+- 400: Invalid blog ID format, validation errors
+- 404: Blog not found
+- 500: Server error
+
+------------------------------------
+7. DELETE A BLOG (Protected)
+------------------------------------
 Method: DELETE
 URL: http://localhost:5000/api/v1/blogs/:id
 
-Description: Deletes a blog by ID
+Description: Deletes a blog by ID (requires authentication)
+
+Authentication Required: YES
+Headers:
+Authorization: Bearer <your-jwt-token>
+OR Cookie: user-token=<your-jwt-token>
 
 Example:
 http://localhost:5000/api/v1/blogs/507f1f77bcf86cd799439011
@@ -128,28 +256,46 @@ Response (200 OK):
   "blog": { ... deleted blog object ... }
 }
 
-====================================
-ERROR RESPONSES
-====================================
-
-400 Bad Request:
-- Invalid blog ID format
-- Missing required fields
-- Validation errors
-
-404 Not Found:
-- Blog not found
-
-409 Conflict:
-- Blog with same title already exists
-
-500 Internal Server Error:
-- Server error
+Error Responses:
+- 401: Unauthorized access - Please login
+- 400: Invalid blog ID format
+- 404: Blog not found
+- 500: Server error
 
 ====================================
-BLOG SCHEMA
+AUTHENTICATION GUIDE
 ====================================
 
+To access protected endpoints:
+
+Option 1 - Using Authorization Header:
+Add to request headers:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Option 2 - Using Cookie (automatic after login):
+The login endpoint automatically sets a cookie named "user-token"
+Subsequent requests will include this cookie automatically
+
+JWT Token Details:
+- Payload: { email, id }
+- Expiration: 7 days (default)
+- Algorithm: HS256
+
+====================================
+DATA SCHEMAS
+====================================
+
+User Schema:
+{
+  "_id": "MongoDB ObjectId",
+  "username": "String (required, unique, trimmed)",
+  "email": "String (required, unique, lowercase, trimmed)",
+  "password": "String (hashed with bcrypt, min 6 chars)",
+  "createdAt": "Date (auto-generated)",
+  "updatedAt": "Date (auto-generated)"
+}
+
+Blog Schema:
 {
   "_id": "MongoDB ObjectId",
   "title": "String (required, 5-200 chars)",
@@ -163,7 +309,7 @@ BLOG SCHEMA
 }
 
 ====================================
-CATEGORIES
+BLOG CATEGORIES
 ====================================
 - tech
 - design
@@ -172,14 +318,74 @@ CATEGORIES
 Note: Categories are automatically converted to lowercase.
 
 ====================================
+ERROR RESPONSES
+====================================
+
+Authentication Errors:
+401 Unauthorized:
+- No token provided
+- Invalid or expired token
+- Invalid credentials
+
+Validation Errors:
+400 Bad Request:
+- Invalid email format
+- Missing required fields
+- Invalid blog ID format
+- Validation errors
+
+Conflict Errors:
+409 Conflict:
+- User with email/username already exists
+- Blog with title already exists
+
+Not Found Errors:
+404 Not Found:
+- User not found
+- Blog not found
+
+Server Errors:
+500 Internal Server Error:
+- Database errors
+- Server errors
+
+====================================
 POSTMAN COLLECTION SUMMARY
 ====================================
 
-1. Create Blog       → POST   /api/v1/blogs
-2. Get All Blogs     → GET    /api/v1/blogs
-3. Get Blog by ID    → GET    /api/v1/blogs/:id
-4. Update Blog       → PUT    /api/v1/blogs/:id
-5. Delete Blog       → DELETE /api/v1/blogs/:id
+Authentication:
+1. Register User    → POST   /api/v1/users/register
+2. Login User       → POST   /api/v1/users/login
+
+Blogs (Public):
+3. Get All Blogs    → GET    /api/v1/blogs
+4. Get Blog by ID   → GET    /api/v1/blogs/:id
+
+Blogs (Protected - Requires Auth):
+5. Create Blog      → POST   /api/v1/blogs
+6. Update Blog      → PUT    /api/v1/blogs/:id
+7. Delete Blog      → DELETE /api/v1/blogs/:id
+
+====================================
+QUICK START GUIDE
+====================================
+
+1. Register a new user:
+   POST /api/v1/users/register
+   Body: { "username": "admin", "email": "admin@example.com", "password": "admin123" }
+
+2. Login:
+   POST /api/v1/users/login
+   Body: { "email": "admin@example.com", "password": "admin123" }
+   → Save the returned token
+
+3. Create a blog (use token from step 2):
+   POST /api/v1/blogs
+   Header: Authorization: Bearer <token>
+   Body: { "title": "My First Blog", "description": "Blog content..." }
+
+4. View all blogs (no auth required):
+   GET /api/v1/blogs
 
 ====================================
 END OF DOCUMENTATION
