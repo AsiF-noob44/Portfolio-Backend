@@ -1,4 +1,4 @@
-// Importing necessary modules
+// Import necessary modules
 import express from "express";
 import connectDB from "./Config/database.config.js";
 import blogRoutes from "./Routes/blog.routes.js";

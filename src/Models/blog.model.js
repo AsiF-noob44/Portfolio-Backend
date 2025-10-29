@@ -4,33 +4,33 @@ const blogSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true, // Field is mandatory
-      trim: true, // Remove whitespace from both ends
-      minlength: 5, // Minimum length for strings
-      maxlength: 200, // Maximum length for strings
+      required: true,
+      trim: true,
+      minlength: 5,
+      maxlength: 200,
     },
     img: {
       type: String,
-      default: "default-image.jpg", // Default value if not provided
+      default: "default-image.jpg",
     },
     category: {
-      type: String, // Only allow specific values
-      lowercase: true, // Convert to lowercase
+      type: String,
+      lowercase: true,
     },
     description: {
       type: String,
-      required: [true, "Description is required"], // Custom error message
+      required: [true, "Description is required"],
       trim: true,
     },
     short_description: {
       type: String,
-      maxlength: 150,
+      maxlength: [150, "Short description cannot exceed 150 characters"],
     },
     views: {
       type: Number,
-      default: 0, // Default number
-      min: 0, // Minimum value for numbers
-      max: 1000000, // Maximum value for numbers
+      default: 0,
+      min: 0,
+      max: 1000000,
     },
   },
   {
