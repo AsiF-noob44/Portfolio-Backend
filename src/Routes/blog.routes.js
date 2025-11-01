@@ -7,6 +7,7 @@ import {
   deleteBlogById,
 } from "../Controllers/blog.controller.js";
 import { validateUser } from "../middlewares/validation.middleware.js";
+import upload from "../Config/multer.config.js";
 
 const router = express.Router();
 
@@ -17,9 +18,9 @@ const router = express.Router();
 router.get("/", getAllBlogs);
 router.get("/:id", getBlogById);
 
-// Protected routes
-router.post("/", validateUser, createBlog);
-router.put("/:id", validateUser, updateBlogById);
+// Protected routes (with optional image upload)
+router.post("/", validateUser, upload.single("img"), createBlog);
+router.put("/:id", validateUser, upload.single("img"), updateBlogById);
 router.delete("/:id", validateUser, deleteBlogById);
 
 export default router;

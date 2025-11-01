@@ -1,17 +1,16 @@
 import Blog from "../Models/blog.model.js";
+import cloudinary from "../Config/cloudinary.config.js";
 
 export const createBlog = async (req, res) => {
   try {
-    const { title, img, category, description, short_description } = req.body;
+    const { title, category, description, short_description } = req.body;
 
-    // Validate required fields
     if (!title || !description) {
       return res.status(400).json({
         message: "Title and description are required",
       });
     }
 
-    // Check if blog with same title already exists
     const existingBlog = await Blog.findOne({ title: title.trim() });
     if (existingBlog) {
       return res.status(409).json({
@@ -19,9 +18,11 @@ export const createBlog = async (req, res) => {
       });
     }
 
+    const imgUrl = req.file ? req.file.path : req.body.img;
+
     const newBlog = new Blog({
       title,
-      img,
+      img: imgUrl,
       category,
       description,
       short_description,
@@ -34,7 +35,6 @@ export const createBlog = async (req, res) => {
       blog: newBlog,
     });
   } catch (error) {
-    // Handle validation errors
     if (error.name === "ValidationError") {
       return res.status(400).json({
         message: "Validation error",
@@ -154,9 +154,8 @@ export const updateBlogById = async (req, res) => {
       });
     }
 
-    const { title, img, category, description, short_description } = req.body;
+    const { title, category, description, short_description } = req.body;
 
-    // Validate required fields
     if (!title || !description) {
       return res.status(400).json({
         success: false,
@@ -164,36 +163,74 @@ export const updateBlogById = async (req, res) => {
       });
     }
 
+    // Find existing blog
+    const existingBlog = await Blog.findById(req.params.id);
+    if (!existingBlog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
     // Checking if blog with same title already exists (excluding current blog)
-    const existingBlog = await Blog.findOne({
+    const duplicateBlog = await Blog.findOne({
       title: title.trim(),
       _id: { $ne: req.params.id },
     });
-    if (existingBlog) {
+    if (duplicateBlog) {
       return res.status(409).json({
         success: false,
         message: "Blog with this title already exists",
       });
     }
 
+    // Handle image update
+    let imgUrl = existingBlog.img; // Keep existing image by default
+
+    if (req.file) {
+      // New image uploaded
+      imgUrl = req.file.path;
+
+      // Delete old image from Cloudinary if it exists and is not default
+      if (
+        existingBlog.img &&
+        existingBlog.img !== "default-image.jpg" &&
+        existingBlog.img.includes("cloudinary.com")
+      ) {
+        try {
+          // Extract public_id from old Cloudinary URL
+          const urlParts = existingBlog.img.split("/");
+          const uploadIndex = urlParts.indexOf("upload");
+          if (uploadIndex !== -1) {
+            const publicIdWithExtension = urlParts
+              .slice(uploadIndex + 2)
+              .join("/");
+            const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, "");
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (cloudinaryError) {
+          console.error(
+            "Error deleting old image from Cloudinary:",
+            cloudinaryError
+          );
+        }
+      }
+    } else if (req.body.img) {
+      // Image URL provided in body
+      imgUrl = req.body.img;
+    }
+
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id,
       {
         title,
-        img,
+        img: imgUrl,
         category,
         description,
         short_description,
       },
-      { new: true, runValidators: true } // Run schema validations
+      { new: true, runValidators: true }
     );
-
-    if (!updatedBlog) {
-      return res.status(404).json({
-        success: false,
-        message: "Blog not found",
-      });
-    }
 
     res.status(200).json({
       success: true,
@@ -201,7 +238,6 @@ export const updateBlogById = async (req, res) => {
       blog: updatedBlog,
     });
   } catch (error) {
-    // Handle validation errors
     if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
@@ -229,14 +265,41 @@ export const deleteBlogById = async (req, res) => {
       });
     }
 
-    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+    // Find the blog first to get image info
+    const blog = await Blog.findById(req.params.id);
 
-    if (!deletedBlog) {
+    if (!blog) {
       return res.status(404).json({
         success: false,
         message: "Blog not found",
       });
     }
+
+    // Delete image from Cloudinary if it's not the default image
+    if (blog.img && blog.img !== "default-image.jpg") {
+      // Check if it's a Cloudinary URL
+      if (blog.img.includes("cloudinary.com")) {
+        try {
+          // Extract public_id from Cloudinary URL
+          const urlParts = blog.img.split("/");
+          const uploadIndex = urlParts.indexOf("upload");
+          if (uploadIndex !== -1) {
+            // Get everything after /upload/v{timestamp}/
+            const publicIdWithExtension = urlParts
+              .slice(uploadIndex + 2)
+              .join("/");
+
+            const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, "");
+
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (cloudinaryError) {
+          console.error("Error deleting from Cloudinary:", cloudinaryError);
+        }
+      }
+    }
+
+    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
