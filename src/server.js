@@ -3,6 +3,7 @@ import express from "express";
 import connectDB from "./Config/database.config.js";
 import blogRoutes from "./Routes/blog.routes.js";
 import userRoutes from "./Routes/user.routes.js";
+import fileRoutes from "./Routes/file.routes.js";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 dotenv.config();
@@ -20,6 +21,7 @@ connectDB();
 // Routes
 app.use("/api/v1/blogs", blogRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/files", fileRoutes);
 
 // Home Route
 app.get("/", (req, res) => {
